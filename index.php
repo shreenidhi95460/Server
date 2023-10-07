@@ -12,7 +12,7 @@ if ($conn->connect_error)
 {
     die("Connection failed: " . $conn->connect_error);
 }
-
+  
 $database = $_GET['Database'];
 $pgTable =  $_GET['PG_TABLE'];
 $columns =  $_GET['COLUMNS'];
