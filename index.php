@@ -20,78 +20,91 @@ $names   =  $_GET['NAMES'];
 $data    =  $_GET['DATA'];
 
 // SQL query to create a new database
-$sql = "CREATE DATABASE $database";
+$sql = "CREATE DATABASE IF NOT EXISTS $database";
 
 if ($conn->query($sql) === TRUE)
 {
     echo "Database $database created successfully.";
-    
-    $conn = new mysqli($servername, $username, $password,$database);
+}
 
-    $pgTable = $conn->real_escape_string($pgTable);
-    $columns = intval($columns);
-    $columnNames = explode("_", $names);
+// Close the connection
+$conn->close();
 
-    $sql = "CREATE TABLE $pgTable (";
+// Create a connection to the newly created database
+$conn = new mysqli($servername, $username, $password, $database);
 
-    for ($i = 0; $i < $columns; $i++) 
-    {
-        $columnName = $conn->real_escape_string($columnNames[$i]);
-        $sql .= "`$columnName` VARCHAR(255)";
-        
-        if ($i < $columns - 1) {
-            $sql .= ",";
-        }
-    }
-
-    $sql .= ");";
-
-    if ($conn->query($sql) === TRUE) {
-        echo "Table $pgTable created successfully.";
-    } else {
-        echo "Error: " . $conn->error;
-    }
-} 
-else
+// Check connection
+if ($conn->connect_error) 
 {
-    $conn = new mysqli($servername, $username, $password,$database);
-    $pgTable = $conn->real_escape_string($pgTable);
-    $columns = intval($columns);
-    $columnNames = explode("_", $names);
+    die("Connection failed: " . $conn->connect_error);
+}
 
-    $sql = "CREATE TABLE $pgTable (";
+$pgTable = $conn->real_escape_string($pgTable);
+$columns = intval($columns);
+$columnNames = explode("_", $names);
 
-    for ($i = 0; $i < $columns; $i++) 
-    {
-        $columnName = $conn->real_escape_string($columnNames[$i]);
-        $sql .= "`$columnName` VARCHAR(255)";
-        
-        if ($i < $columns - 1) 
-        {
-            $sql .= ",";
-        }
-    }
+$sql = "CREATE TABLE $pgTable (";
 
-    $sql .= ");";
-
-    if ($conn->query($sql) === TRUE) 
-    {
-        echo "Table $pgTable created successfully.";
-    }
-    else 
-    {
-        $columnNames = explode("_", $names);
-        $columnData  = explode("_", $data);
-
-        for ($i = 0; $i < $columns; $i++) 
-        {
-            $columnName = $conn->real_escape_string($columnNames[$i]);
-            $columnData = $conn->real_escape_string($columnData[$i]);
-        }
+for ($i = 0; $i < $columns; $i++) 
+{
+    $columnName = $conn->real_escape_string($columnNames[$i]);
+    $sql .= "`$columnName` VARCHAR(255)";
+    
+    if ($i < $columns - 1) {
+        $sql .= ",";
     }
 }
 
+$sql .= ");";
 
+if ($conn->query($sql) === TRUE) 
+{
+    echo "Table $pgTable created successfully.";
+}
+else 
+{
+    echo "Error creating table: " . $conn->error;
+}
+
+// Insert data into the table
+$columndata = explode("_", $data);
+
+$sql = "INSERT INTO $pgTable (";
+
+for ($i = 0; $i < $columns; $i++) 
+{
+    $data = $conn->real_escape_string($columndata[$i]);
+    $sql .= "`$columnNames[$i]`";
+    
+    if ($i < $columns - 1) 
+    {
+        $sql .= ",";
+    }
+}    
+
+$sql .= ") VALUES (";
+
+for ($i = 0; $i < $columns; $i++) 
+{
+    $data = $conn->real_escape_string($columndata[$i]);
+    $sql .= "'$data'";
+    
+    if ($i < $columns - 1) 
+    {
+        $sql .= ",";
+    }
+}
+
+$sql .= ");";
+
+if ($conn->query($sql) === TRUE) 
+{
+    echo "Data inserted into $pgTable successfully.";
+}
+else 
+{
+    echo "Error inserting data: " . $conn->error;
+}
 
 // Close the connection
 $conn->close();
